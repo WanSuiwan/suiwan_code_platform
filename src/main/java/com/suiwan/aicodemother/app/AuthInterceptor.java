@@ -1,11 +1,11 @@
-package com.yupi.yuaicodemother.app;
+package com.suiwan.aicodemother.app;
 
-import com.yupi.yuaicodemother.annotation.AuthCheck;
-import com.yupi.yuaicodemother.exception.BusinessException;
-import com.yupi.yuaicodemother.exception.ErrorCode;
-import com.yupi.yuaicodemother.model.entity.User;
-import com.yupi.yuaicodemother.model.enums.UserRoleEnum;
-import com.yupi.yuaicodemother.service.UserService;
+import com.suiwan.aicodemother.annotation.AuthCheck;
+import com.suiwan.aicodemother.exception.BusinessException;
+import com.suiwan.aicodemother.exception.ErrorCode;
+import com.suiwan.aicodemother.model.entity.User;
+import com.suiwan.aicodemother.model.enums.UserRoleEnum;
+import com.suiwan.aicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;

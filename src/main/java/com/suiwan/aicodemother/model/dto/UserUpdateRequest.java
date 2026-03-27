@@ -1,4 +1,4 @@
-package com.yupi.yuaicodemother.model.dto;
+package com.suiwan.aicodemother.model.dto;
 
 import lombok.Data;
 

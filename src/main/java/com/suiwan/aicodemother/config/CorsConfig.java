@@ -1,4 +1,4 @@
-package com.yupi.yuaicodemother.config;
+package com.suiwan.aicodemother.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
