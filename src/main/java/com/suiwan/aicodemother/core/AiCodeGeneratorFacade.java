@@ -1,14 +1,21 @@
 package com.suiwan.aicodemother.core;
 
+import cn.hutool.json.JSONUtil;
 import com.suiwan.aicodemother.ai.AiCodeGeneratorService;
 import com.suiwan.aicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.suiwan.aicodemother.ai.model.HtmlCodeResult;
 import com.suiwan.aicodemother.ai.model.MultiFileCodeResult;
+import com.suiwan.aicodemother.ai.model.message.AiResponseMessage;
+import com.suiwan.aicodemother.ai.model.message.ToolExecutedMessage;
+import com.suiwan.aicodemother.ai.model.message.ToolRequestMessage;
 import com.suiwan.aicodemother.core.parser.CodeParserExecutor;
 import com.suiwan.aicodemother.core.saver.CodeFileSaverExecutor;
 import com.suiwan.aicodemother.exception.BusinessException;
 import com.suiwan.aicodemother.exception.ErrorCode;
 import com.suiwan.aicodemother.model.enums.CodeGenTypeEnum;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.ToolExecution;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -75,8 +82,8 @@ public class AiCodeGeneratorFacade {
                 yield processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE,appId);
             }
             case VUE_PROJECT -> {
-                Flux<String> codeStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
-                yield processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
+                TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
+                yield processTokenStream(tokenStream);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
@@ -85,20 +92,38 @@ public class AiCodeGeneratorFacade {
         };
     }
 
-//    private File generateAndSaveHtmlCode(String userMessage) {
-//        HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(userMessage);
-//        return CodeFileSaver.saveHtmlCodeResult(result);
-//    }
-//    /**
-//     * 生成多文件模式的代码并保存
-//     *
-//     * @param userMessage 用户提示词
-//     * @return 保存的目录
-//     */
-//    private File generateAndSaveMultiFileCode(String userMessage) {
-//        MultiFileCodeResult result = aiCodeGeneratorService.generateMultiFileCode(userMessage);
-//        return CodeFileSaver.saveMultiFileCodeResult(result);
-//    }
+
+    /**
+     * 将 TokenStream 转换为 Flux<String>，并传递工具调用信息
+     *
+     * @param tokenStream TokenStream 对象
+     * @return Flux<String> 流式响应
+     */
+    private Flux<String> processTokenStream(TokenStream tokenStream) {
+        return Flux.create(sink -> {
+            tokenStream.onPartialResponse((String partialResponse) -> {
+                        AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
+                        sink.next(JSONUtil.toJsonStr(aiResponseMessage));
+                    })
+                    .onPartialToolExecutionRequest((index, toolExecutionRequest) -> {
+                        ToolRequestMessage toolRequestMessage = new ToolRequestMessage(toolExecutionRequest);
+                        sink.next(JSONUtil.toJsonStr(toolRequestMessage));
+                    })
+                    .onToolExecuted((ToolExecution toolExecution) -> {
+                        ToolExecutedMessage toolExecutedMessage = new ToolExecutedMessage(toolExecution);
+                        sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
+                    })
+                    .onCompleteResponse((ChatResponse response) -> {
+                        sink.complete();
+                    })
+                    .onError((Throwable error) -> {
+                        error.printStackTrace();
+                        sink.error(error);
+                    })
+                    .start();
+        });
+    }
+
 
     /**
      * 通用流式代码处理方法
@@ -127,66 +152,5 @@ public class AiCodeGeneratorFacade {
             }
         });
     }
-
-
-
-//    /**
-//     * 生成 HTML 模式的代码并保存（流式）
-//     *
-//     * @param userMessage 用户提示词
-//     * @return 保存的目录
-//     */
-//    private Flux<String> generateAndSaveHtmlCodeStream(String userMessage) {
-//        Flux<String> result = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
-//        // 当流式返回生成代码完成后，再保存代码
-//        StringBuilder codeBuilder = new StringBuilder();
-//        return result
-//                .doOnNext(chunk -> {
-//                    // 实时收集代码片段
-//                    codeBuilder.append(chunk);
-//                })
-//                .doOnComplete(() -> {
-//                    // 流式返回完成后保存代码
-//                    try {
-//                        String completeHtmlCode = codeBuilder.toString();
-//                        HtmlCodeResult htmlCodeResult = CodeParser.parseHtmlCode(completeHtmlCode);
-//                        // 保存代码到文件
-//                        File savedDir = CodeFileSaver.saveHtmlCodeResult(htmlCodeResult);
-//                        log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
-//                    } catch (Exception e) {
-//                        log.error("保存失败: {}", e.getMessage());
-//                    }
-//                });
-//    }
-//
-//    /**
-//     * 生成多文件模式的代码并保存（流式）
-//     *
-//     * @param userMessage 用户提示词
-//     * @return 保存的目录
-//     */
-//    private Flux<String> generateAndSaveMultiFileCodeStream(String userMessage) {
-//        Flux<String> result = aiCodeGeneratorService.generateMultiFileCodeStream(userMessage);
-//        // 当流式返回生成代码完成后，再保存代码
-//        StringBuilder codeBuilder = new StringBuilder();
-//        return result
-//                .doOnNext(chunk -> {
-//                    // 实时收集代码片段
-//                    codeBuilder.append(chunk);
-//                })
-//                .doOnComplete(() -> {
-//                    // 流式返回完成后保存代码
-//                    try {
-//                        String completeMultiFileCode = codeBuilder.toString();
-//                        MultiFileCodeResult multiFileResult = CodeParser.parseMultiFileCode(completeMultiFileCode);
-//                        // 保存代码到文件
-//                        File savedDir = CodeFileSaver.saveMultiFileCodeResult(multiFileResult);
-//                        log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
-//                    } catch (Exception e) {
-//                        log.error("保存失败: {}", e.getMessage());
-//                    }
-//                });
-//    }
-
 }
 
