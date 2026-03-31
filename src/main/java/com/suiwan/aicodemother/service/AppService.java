@@ -2,6 +2,7 @@ package com.suiwan.aicodemother.service;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
+import com.suiwan.aicodemother.model.dto.app.AppAddRequest;
 import com.suiwan.aicodemother.model.dto.app.AppQueryRequest;
 import com.suiwan.aicodemother.model.entity.App;
 import com.suiwan.aicodemother.model.entity.User;
@@ -18,6 +19,8 @@ import java.util.List;
 public interface AppService extends IService<App> {
 
     AppVO getAppVO(App app);
+
+    Long createApp(AppAddRequest appAddRequest, User loginUser);
 
     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
 
