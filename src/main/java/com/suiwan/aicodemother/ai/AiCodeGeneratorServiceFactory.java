@@ -2,7 +2,7 @@ package com.suiwan.aicodemother.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.suiwan.aicodemother.ai.tools.FileWriteTool;
+import com.suiwan.aicodemother.ai.tools.*;
 import com.suiwan.aicodemother.exception.BusinessException;
 import com.suiwan.aicodemother.exception.ErrorCode;
 import com.suiwan.aicodemother.model.enums.CodeGenTypeEnum;
@@ -25,6 +25,9 @@ import java.time.Duration;
 @Slf4j
 @Configuration
 public class AiCodeGeneratorServiceFactory {
+
+    @Resource
+    private ToolManager toolManager;
 
     @Resource
     private ChatModel chatModel;
@@ -84,16 +87,18 @@ public class AiCodeGeneratorServiceFactory {
         chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
         // 根据代码生成类型选择不同的模型配置
 
+
         return switch (codeGenType) {
             // Vue 项目生成使用推理模型
             case VUE_PROJECT -> AiServices.builder(AiCodeGeneratorService.class)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(new FileWriteTool())
+                    .tools(toolManager.getAllTools())
                     .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                             toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
                     ))
                     .build();
+
             // HTML 和多文件生成使用默认模型
             case HTML, MULTI_FILE -> AiServices.builder(AiCodeGeneratorService.class)
                     .chatModel(chatModel)

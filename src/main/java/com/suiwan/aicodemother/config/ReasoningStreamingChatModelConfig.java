@@ -22,8 +22,8 @@ public class ReasoningStreamingChatModelConfig {
     @Bean
     public StreamingChatModel reasoningStreamingChatModel() {
         // 为了测试方便临时修改
-        final String modelName = "kimi-k2.5";
-        final int maxTokens = 8192;
+        final String modelName = "kimi-k2-turbo-preview";
+        final int maxTokens = 32768;
         // 生产环境使用：
         // final String modelName = "kimi-k2-turbo-preview"
         // final int maxTokens = 32768;
