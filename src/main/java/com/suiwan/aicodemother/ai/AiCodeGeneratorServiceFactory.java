@@ -33,6 +33,7 @@ public class AiCodeGeneratorServiceFactory {
     @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
 
+
     @Resource
     private ChatHistoryService chatHistoryService;
 

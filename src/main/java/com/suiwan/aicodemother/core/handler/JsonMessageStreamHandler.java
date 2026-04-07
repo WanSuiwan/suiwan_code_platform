@@ -1,14 +1,11 @@
 package com.suiwan.aicodemother.core.handler;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.suiwan.aicodemother.ai.model.message.*;
 import com.suiwan.aicodemother.ai.tools.BaseTool;
 import com.suiwan.aicodemother.ai.tools.ToolManager;
-import com.suiwan.aicodemother.constant.AppConstant;
-import com.suiwan.aicodemother.core.builder.VueProjectBuilder;
 import com.suiwan.aicodemother.model.entity.User;
 import com.suiwan.aicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.suiwan.aicodemother.service.ChatHistoryService;
@@ -32,8 +29,7 @@ public class JsonMessageStreamHandler {
     private ToolManager toolManager;
 
 
-    @Resource
-    private VueProjectBuilder vueProjectBuilder;
+
     /**
      * 处理 TokenStream（VUE_PROJECT）
      * 解析 JSON 消息并重组为完整的响应格式
@@ -61,8 +57,6 @@ public class JsonMessageStreamHandler {
                     // 流式响应完成后，添加 AI 消息到对话历史
                     String aiResponse = chatHistoryStringBuilder.toString();
                     chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
-                    String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
-                    vueProjectBuilder.buildProjectAsync(projectPath);
                 })
                 .doOnError(error -> {
                     // 如果AI回复失败，也要记录错误消息

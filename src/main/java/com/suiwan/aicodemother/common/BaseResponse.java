@@ -2,6 +2,7 @@ package com.suiwan.aicodemother.common;
 
 import com.suiwan.aicodemother.exception.ErrorCode;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 /*
@@ -9,6 +10,7 @@ import java.io.Serializable;
 * */
 
 @Data
+@NoArgsConstructor
 public class BaseResponse<T> implements Serializable {
 
     private int code;

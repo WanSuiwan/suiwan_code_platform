@@ -19,11 +19,14 @@ import com.suiwan.aicodemother.model.dto.app.*;
 import com.suiwan.aicodemother.model.entity.User;
 import com.suiwan.aicodemother.model.enums.CodeGenTypeEnum;
 import com.suiwan.aicodemother.model.vo.AppVO;
+import com.suiwan.aicodemother.ratelimiter.annotation.RateLimit;
+import com.suiwan.aicodemother.ratelimiter.enums.RateLimitType;
 import com.suiwan.aicodemother.service.ProjectDownloadService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -120,7 +123,10 @@ public class AppController {
      * @param request 请求对象
      * @return 生成结果流
      */
+
+
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RateLimit(limitType = RateLimitType.USER, rate = 5, rateInterval = 60, message = "AI 对话请求过于频繁，请稍后再试")
     public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
                                                        @RequestParam String message,
                                                        HttpServletRequest request) {
@@ -271,6 +277,11 @@ public class AppController {
      * @return 精选应用列表
      */
     @PostMapping("/good/list/page/vo")
+    @Cacheable(
+            value = "good_app_page",
+            key = "T(com.suiwan.aicodemother.utils.CacheKeyUtils).generateKey(#appQueryRequest)",
+            condition = "#appQueryRequest.pageNum <= 10"
+    )
     public BaseResponse<Page<AppVO>> listGoodAppVOByPage(@RequestBody AppQueryRequest appQueryRequest) {
         ThrowUtils.throwIf(appQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 限制每页最多 20 个
